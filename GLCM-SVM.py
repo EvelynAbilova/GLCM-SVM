@@ -8,7 +8,6 @@ from sklearn.svm import SVR
 from sklearn.metrics import mean_absolute_error
 from skimage.feature import greycomatrix, greycoprops
 from joblib import dump
-from datetime import datetime
 
 # Define the path to the MALL dataset
 MALL_DIR = 'MALL/'
@@ -22,14 +21,11 @@ image_features = np.load(os.path.join(MALL_DIR, 'images.npy'))
 # Load labels
 labels = np.load(os.path.join(MALL_DIR, 'labels.npy'))
 
-print('defining the GLCM properties', datetime.now())
 # Define the GLCM properties
 dists = [1, 2, 3]
 angles = [0, np.pi/4, np.pi/2, 3*np.pi/4]
 props = ['contrast', 'dissimilarity', 'homogeneity', 'energy', 'correlation']
 
-
-print("Extract the GLCM features from the images", datetime.now())
 # Extract the GLCM features from the images
 glcm_features = []
 for i in range(image_features.shape[0]):
@@ -40,11 +36,9 @@ for i in range(image_features.shape[0]):
     glcm_features.append(glcm_props)
 glcm_features = np.vstack(glcm_features)
 
-print('Split the dataset into training and testing sets')
 # Split the dataset into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(glcm_features, labels, test_size=0.2, random_state=42)
 
-print('Train SVR', datetime.now())
 # Train SVR
 svr = SVR(kernel='rbf', epsilon=0.1, C=100)
 svr.fit(X_train, y_train)
@@ -59,7 +53,6 @@ print('Mean absolute error: {:.2f}'.format(mae))
 # Save the trained model
 dump(svr, 'svr_model.joblib')
 
-print('Sort the predictions in descending order', datetime.now())
 # Sort the predictions in descending order
 sorted_indices = np.argsort(y_pred)[::-1]
 
