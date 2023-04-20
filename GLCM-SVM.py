@@ -53,26 +53,44 @@ print('Mean absolute error: {:.2f}'.format(mae))
 # Save the trained model
 dump(svr, 'svr_model.joblib')
 
-# Sort the predictions in descending order
-sorted_indices = np.argsort(y_pred)[::-1]
+# Save the predicted and actual counts for each test sample
+results = []
+for i in range(len(y_test)):
+    img_path = os.path.join(MALL_DIR, 'frames', 'frames', 'seq_{:06d}.jpg'.format(i+1))
+    actual_count = int(y_test[i])
+    predicted_count = int(round(y_pred[i]))
+    results.append((img_path, predicted_count, actual_count))
 
-# Visualize the top 5 and bottom 5 predictions
-fig, axes = plt.subplots(2, 5, figsize=(15, 8))
+# Sort the results by the difference between actual count and predicted count
+results.sort(key=lambda x: abs(x[2] - x[1]))
 
-for i in range(5):
-    img_path = os.path.join(MALL_DIR, 'frames', 'frames', 'seq_{:06d}.jpg'.format(sorted_indices[i] + 1))
-    img = cv2.imread(img_path)
-    axes[0, i].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    axes[0, 0].text(-0.2, 0.5, 'Best Score', fontsize=12, rotation=90, va='center', ha='center', transform=axes[0, 0].transAxes)
-    axes[0, i].set_title('Prediction: {:.2f}'.format(y_pred[sorted_indices[i]]))
-    axes[0, i].set_xlabel('Actual: {}'.format(int(labels[sorted_indices[i]])), fontsize=10)
+# Select the best and worst results based on prediction accuracy
+best_result = results[0]
+worst_result = results[-1]
 
-    img_path = os.path.join(MALL_DIR, 'frames', 'frames', 'seq_{:06d}.jpg'.format(sorted_indices[-i - 1] + 1))
-    img = cv2.imread(img_path)
-    axes[1, i].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    axes[1, 0].text(-0.2, 0.5, 'Worth Score', fontsize=12, rotation=90, va='center', ha='center', transform=axes[1, 0].transAxes)
-    axes[1, i].set_title('Prediction: {:.2f}'.format(y_pred[sorted_indices[-i - 1]]))
-    axes[1, i].set_xlabel('Actual: {}'.format(int(labels[sorted_indices[-i - 1]])), fontsize=10)
+# Calculate the prediction accuracy for the best and worst results
+best_accuracy = (1 - abs(best_result[1] - best_result[2]) / best_result[1]) * 100
+worst_accuracy = (1 - abs(worst_result[2] - worst_result[1]) / worst_result[2]) * 100
 
-plt.tight_layout()
+# Display the best and worst results
+plt.figure(figsize=(10, 5))
+
+# Display the best result
+plt.subplot(1, 2, 1)
+img = cv2.imread(best_result[0], cv2.IMREAD_COLOR)
+img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+plt.imshow(img)
+plt.axis('off')
+plt.title('Best score\nActual count: {}\nPredicted count: {}\nAccuracy: {:.2f}%'.format(
+    best_result[2], best_result[1], best_accuracy))
+
+# Display the worst result
+plt.subplot(1, 2, 2)
+img = cv2.imread(worst_result[0], cv2.IMREAD_COLOR)
+img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+plt.imshow(img)
+plt.axis('off')
+plt.title('Worst score\nActual count: {}\nPredicted count: {}\nAccuracy: {:.2f}%'.format(
+    worst_result[2], worst_result[1], worst_accuracy))
+
 plt.show()
